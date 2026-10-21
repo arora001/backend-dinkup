@@ -17,7 +17,9 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('DinkUp API')
-    .setDescription('Pickleball court booking and open games for Chandigarh tricity')
+    .setDescription(
+      'Pickleball court booking and open games for Chandigarh tricity',
+    )
     .setVersion('0.1.0')
     .addBearerAuth()
     .build();
@@ -29,4 +31,4 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap();
+void bootstrap();
