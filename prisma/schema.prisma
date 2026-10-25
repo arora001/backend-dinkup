@@ -1,7 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// DinkUp — Pickleball court booking & open games for Chandigarh tricity
 
 generator client {
   provider = "prisma-client"
@@ -10,4 +7,33 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum Role {
+  PLAYER
+  HOST
+  ADMIN
+}
+
+// ─────────────────────────────────────────────
+// Auth & Users
+// ─────────────────────────────────────────────
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  phone     String?  @unique
+  password  String   // argon2 hash
+  name      String
+  role      Role     // chosen at registration — PLAYER or HOST, never self-assigned ADMIN
+
+  isActive  Boolean  @default(true) @map("is_active") // soft-disable accounts
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("tbl_user")
 }
