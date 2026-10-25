@@ -126,6 +126,11 @@ model VenueImage {
   displayOrder Int      @default(0)     @map("display_order")
   createdAt    DateTime @default(now())  @map("created_at")
 
+// Contact Info (Front desk / Court manager)
+    contactPhone    String?      @map("contact_phone")    // Front desk / manager mobile
+    whatsappNumber  String?      @map("whatsapp_number")  // For 1-tap "Chat on WhatsApp"
+    contactEmail    String?      @map("contact_email")    // Optional public support email
+
   venue        Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@map("tbl_venue_image")
