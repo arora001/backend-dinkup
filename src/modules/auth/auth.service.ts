@@ -3,13 +3,14 @@ import {
   ConflictException,
   UnauthorizedException,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { RegisterDto, LoginDto } from './dto/index.js';
-import { JwtPayload } from '../common/types/jwt-payload.js';
-import { Role } from '../common/enums/role.enum.js';
+import { JwtPayload } from '../../common/types/jwt-payload.js';
+import { Role } from '../../common/enums/role.enum.js';
 
 @Injectable()
 export class AuthService {
@@ -121,6 +122,68 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  async deleteMyAccount(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Account not found');
+    }
+
+    // Hard delete - row is permanently removed from tbl_user
+    await this.prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return {
+      message: 'Account deleted successfully',
+      deletedUserId: userId,
+    };
+  }
+
+  async getAllUsers() {
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async deleteUserById(userId: number, currentAdminId: number) {
+    const targetUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!targetUser) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    if (userId === currentAdminId) {
+      throw new BadRequestException(
+        'Admins cannot delete their own account using the admin endpoint. Use DELETE /auth/me instead.',
+      );
+    }
+
+    // Hard delete - row is permanently removed from tbl_user
+    await this.prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return {
+      message: `User with ID ${userId} permanently deleted by administrator`,
+      deletedUserId: userId,
+    };
   }
 
   private async generateToken(userId: number, email: string, role: string): Promise<string> {

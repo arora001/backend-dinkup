@@ -6,7 +6,7 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
-import { Role } from '../../common/enums/role.enum.js';
+import { Role } from '../../../common/enums/role.enum.js';
 
 export class RegisterDto {
   /** Player's full name */
