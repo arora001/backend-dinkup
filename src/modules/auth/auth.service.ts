@@ -8,7 +8,8 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { RegisterDto, LoginDto } from './dto/index.js';
+import { RegisterDto } from './dto/register.dto.js';
+import { LoginDto } from './dto/login.dto.js';
 import { JwtPayload } from '../../common/types/jwt-payload.js';
 import { Role } from '../../common/enums/role.enum.js';
 

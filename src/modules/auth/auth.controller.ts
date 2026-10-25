@@ -18,11 +18,12 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service.js';
-import { RegisterDto, LoginDto } from './dto/index.js';
-import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
-import { RolesGuard } from './guards/roles.guard.js';
-import { CurrentUser } from './decorators/current-user.decorator.js';
-import { Roles } from './decorators/roles.decorator.js';
+import { RegisterDto } from './dto/register.dto.js';
+import { LoginDto } from './dto/login.dto.js';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard.js';
+import { RolesGuard } from '../../guards/roles.guard.js';
+import { CurrentUser } from '../../decorators/current-user.decorator.js';
+import { Roles } from '../../decorators/roles.decorator.js';
 import { Role } from '../../common/enums/role.enum.js';
 
 @ApiTags('Auth')
