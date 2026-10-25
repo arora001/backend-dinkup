@@ -102,6 +102,11 @@ model Venue {
   hasWashroom        Boolean   @default(true)  @map("has_washroom")
   hasDrinkingWater   Boolean   @default(true)  @map("has_drinking_water")
 
+  // Contact Info (Front desk / Court manager)
+  contactPhone    String?      @map("contact_phone")    // Front desk / manager mobile
+  whatsappNumber  String?      @map("whatsapp_number")  // For 1-tap "Chat on WhatsApp"
+  contactEmail    String?      @map("contact_email")    // Optional public support email
+
   // Cancellation policy (hours before slot for free cancellation)
   cancellationCutoffHours Int @default(6) @map("cancellation_cutoff_hours")
 
@@ -125,11 +130,6 @@ model VenueImage {
   isCover      Boolean  @default(false) @map("is_cover")
   displayOrder Int      @default(0)     @map("display_order")
   createdAt    DateTime @default(now())  @map("created_at")
-
-// Contact Info (Front desk / Court manager)
-    contactPhone    String?      @map("contact_phone")    // Front desk / manager mobile
-    whatsappNumber  String?      @map("whatsapp_number")  // For 1-tap "Chat on WhatsApp"
-    contactEmail    String?      @map("contact_email")    // Optional public support email
 
   venue        Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
