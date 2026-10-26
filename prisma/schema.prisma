@@ -10,7 +10,7 @@ datasource db {
 }
 
 // ─────────────────────────────────────────────
-// Enums
+// Enums For Module 1 (Auth)
 // ─────────────────────────────────────────────
 
 enum Role {
@@ -18,6 +18,43 @@ enum Role {
   HOST
   ADMIN
 }
+
+// ─────────────────────────────────────────────
+// Enums For Module 2 Venues & Courts
+// ─────────────────────────────────────────────
+
+enum TricityCity {
+  CHANDIGARH
+  MOHALI
+  PANCHKULA
+  ZIRAKPUR
+}
+
+enum CourtSurface {
+  ACRYLIC_HARD
+  CUSHIONED_ACRYLIC
+  SYNTHETIC_TURF
+  WOODEN
+  CONCRETE
+}
+
+enum CourtType {
+  INDOOR
+  OUTDOOR
+  COVERED_ROOFTOP
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+
 
 // ─────────────────────────────────────────────
 // Auth & Users
@@ -35,5 +72,103 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  venues    Venue[] 
   @@map("tbl_user")
 }
+
+// ─────────────────────────────────────────────
+// Venues & Courts Models
+// ─────────────────────────────────────────────
+
+model Venue {
+  id              Int          @id @default(autoincrement())
+  hostId          Int          @map("host_id")
+  name            String
+  slug            String       @unique
+  description     String?
+  
+  // Location
+  city            TricityCity
+  area            String       // e.g. "Sector 8", "Phase 7", "VIP Road"
+  address         String
+  googleMapsUrl   String?      @map("google_maps_url")
+  latitude        Float?
+  longitude       Float?
+
+  // Pickleball-specific amenities
+  hasLighting        Boolean   @default(true)  @map("has_lighting")
+  hasEquipmentRental Boolean   @default(false) @map("has_equipment_rental")
+  hasParking         Boolean   @default(true)  @map("has_parking")
+  hasWashroom        Boolean   @default(true)  @map("has_washroom")
+  hasDrinkingWater   Boolean   @default(true)  @map("has_drinking_water")
+
+  // Contact Info (Front desk / Court manager)
+  contactPhone    String?      @map("contact_phone")    // Front desk / manager mobile
+  whatsappNumber  String?      @map("whatsapp_number")  // For 1-tap "Chat on WhatsApp"
+  contactEmail    String?      @map("contact_email")    // Optional public support email
+
+  // Cancellation policy (hours before slot for free cancellation)
+  cancellationCutoffHours Int @default(6) @map("cancellation_cutoff_hours")
+
+  isActive        Boolean      @default(true) @map("is_active")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  host            User         @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  courts          Court[]
+  images          VenueImage[]
+
+  @@index([city, area])
+  @@map("tbl_venue")
+}
+
+model VenueImage {
+  id           Int      @id @default(autoincrement())
+  venueId      Int      @map("venue_id")
+  url          String
+  isCover      Boolean  @default(false) @map("is_cover")
+  displayOrder Int      @default(0)     @map("display_order")
+  createdAt    DateTime @default(now())  @map("created_at")
+
+  venue        Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@map("tbl_venue_image")
+}
+
+model Court {
+  id               Int          @id @default(autoincrement())
+  venueId          Int          @map("venue_id")
+  name             String       // e.g. "Court 1 (Centre Court)"
+  surface          CourtSurface @default(CUSHIONED_ACRYLIC)
+  type             CourtType    @default(OUTDOOR)
+  
+  // Pricing in INR (e.g. 600 = ₹600/hour)
+  basePricePerHour Int          @map("base_price_per_hour")
+  
+  isActive         Boolean      @default(true) @map("is_active")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  venue            Venue        @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  schedules        Schedule[]
+
+  @@map("tbl_court")
+}
+
+model Schedule {
+  id                  Int       @id @default(autoincrement())
+  courtId             Int       @map("court_id")
+  dayOfWeek           DayOfWeek @map("day_of_week")
+  openTime            String    @map("open_time")    // "06:00" (24h format)
+  closeTime           String    @map("close_time")   // "23:00" (24h format)
+  slotDurationMinutes Int       @default(60)         @map("slot_duration_minutes")
+  priceOverride       Int?      @map("price_override") // Optional custom price for this day (e.g. weekend pricing)
+
+  court               Court     @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  @@unique([courtId, dayOfWeek])
+  @@map("tbl_schedule")
+}
+
