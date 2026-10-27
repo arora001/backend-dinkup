@@ -54,25 +54,32 @@ enum DayOfWeek {
   SUNDAY
 }
 
-
+enum SlotStatus {
+  AVAILABLE
+  HELD
+  BOOKED
+  BLOCKED
+}
 
 // ─────────────────────────────────────────────
 // Auth & Users
 // ─────────────────────────────────────────────
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  phone     String?  @unique
-  password  String   // argon2 hash
-  name      String
-  role      Role     // chosen at registration — PLAYER or HOST, never self-assigned ADMIN
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
+  phone    String? @unique
+  password String // argon2 hash
+  name     String
+  role     Role // chosen at registration — PLAYER or HOST, never self-assigned ADMIN
 
   isActive  Boolean  @default(true) @map("is_active") // soft-disable accounts
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  venues    Venue[] 
+  venues Venue[]
+  slots  Slot[]
+
   @@map("tbl_user")
 }
 
@@ -81,43 +88,43 @@ model User {
 // ─────────────────────────────────────────────
 
 model Venue {
-  id              Int          @id @default(autoincrement())
-  hostId          Int          @map("host_id")
-  name            String
-  slug            String       @unique
-  description     String?
-  
+  id          Int     @id @default(autoincrement())
+  hostId      Int     @map("host_id")
+  name        String
+  slug        String  @unique
+  description String?
+
   // Location
-  city            TricityCity
-  area            String       // e.g. "Sector 8", "Phase 7", "VIP Road"
-  address         String
-  googleMapsUrl   String?      @map("google_maps_url")
-  latitude        Float?
-  longitude       Float?
+  city          TricityCity
+  area          String // e.g. "Sector 8", "Phase 7", "VIP Road"
+  address       String
+  googleMapsUrl String?     @map("google_maps_url")
+  latitude      Float?
+  longitude     Float?
 
   // Pickleball-specific amenities
-  hasLighting        Boolean   @default(true)  @map("has_lighting")
-  hasEquipmentRental Boolean   @default(false) @map("has_equipment_rental")
-  hasParking         Boolean   @default(true)  @map("has_parking")
-  hasWashroom        Boolean   @default(true)  @map("has_washroom")
-  hasDrinkingWater   Boolean   @default(true)  @map("has_drinking_water")
+  hasLighting        Boolean @default(true) @map("has_lighting")
+  hasEquipmentRental Boolean @default(false) @map("has_equipment_rental")
+  hasParking         Boolean @default(true) @map("has_parking")
+  hasWashroom        Boolean @default(true) @map("has_washroom")
+  hasDrinkingWater   Boolean @default(true) @map("has_drinking_water")
 
   // Contact Info (Front desk / Court manager)
-  contactPhone    String?      @map("contact_phone")    // Front desk / manager mobile
-  whatsappNumber  String?      @map("whatsapp_number")  // For 1-tap "Chat on WhatsApp"
-  contactEmail    String?      @map("contact_email")    // Optional public support email
+  contactPhone   String? @map("contact_phone") // Front desk / manager mobile
+  whatsappNumber String? @map("whatsapp_number") // For 1-tap "Chat on WhatsApp"
+  contactEmail   String? @map("contact_email") // Optional public support email
 
   // Cancellation policy (hours before slot for free cancellation)
   cancellationCutoffHours Int @default(6) @map("cancellation_cutoff_hours")
 
-  isActive        Boolean      @default(true) @map("is_active")
-  createdAt       DateTime     @default(now()) @map("created_at")
-  updatedAt       DateTime     @updatedAt @map("updated_at")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  host            User         @relation(fields: [hostId], references: [id], onDelete: Cascade)
-  courts          Court[]
-  images          VenueImage[]
+  host   User         @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  courts Court[]
+  images VenueImage[]
 
   @@index([city, area])
   @@map("tbl_venue")
@@ -128,31 +135,32 @@ model VenueImage {
   venueId      Int      @map("venue_id")
   url          String
   isCover      Boolean  @default(false) @map("is_cover")
-  displayOrder Int      @default(0)     @map("display_order")
-  createdAt    DateTime @default(now())  @map("created_at")
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
 
-  venue        Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@map("tbl_venue_image")
 }
 
 model Court {
-  id               Int          @id @default(autoincrement())
-  venueId          Int          @map("venue_id")
-  name             String       // e.g. "Court 1 (Centre Court)"
-  surface          CourtSurface @default(CUSHIONED_ACRYLIC)
-  type             CourtType    @default(OUTDOOR)
-  
+  id      Int          @id @default(autoincrement())
+  venueId Int          @map("venue_id")
+  name    String // e.g. "Court 1 (Centre Court)"
+  surface CourtSurface @default(CUSHIONED_ACRYLIC)
+  type    CourtType    @default(OUTDOOR)
+
   // Pricing in INR (e.g. 600 = ₹600/hour)
-  basePricePerHour Int          @map("base_price_per_hour")
-  
-  isActive         Boolean      @default(true) @map("is_active")
-  createdAt        DateTime     @default(now()) @map("created_at")
-  updatedAt        DateTime     @updatedAt @map("updated_at")
+  basePricePerHour Int @map("base_price_per_hour")
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  venue            Venue        @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  schedules        Schedule[]
+  venue     Venue      @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  schedules Schedule[]
+  slots     Slot[]
 
   @@map("tbl_court")
 }
@@ -161,14 +169,40 @@ model Schedule {
   id                  Int       @id @default(autoincrement())
   courtId             Int       @map("court_id")
   dayOfWeek           DayOfWeek @map("day_of_week")
-  openTime            String    @map("open_time")    // "06:00" (24h format)
-  closeTime           String    @map("close_time")   // "23:00" (24h format)
-  slotDurationMinutes Int       @default(60)         @map("slot_duration_minutes")
+  openTime            String    @map("open_time") // "06:00" (24h format)
+  closeTime           String    @map("close_time") // "23:00" (24h format)
+  slotDurationMinutes Int       @default(60) @map("slot_duration_minutes")
   priceOverride       Int?      @map("price_override") // Optional custom price for this day (e.g. weekend pricing)
 
-  court               Court     @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  court Court @relation(fields: [courtId], references: [id], onDelete: Cascade)
 
   @@unique([courtId, dayOfWeek])
   @@map("tbl_schedule")
 }
 
+model Slot {
+  id        Int        @id @default(autoincrement())
+  courtId   Int        @map("court_id")
+  date      DateTime   @db.Date
+  startTime String     @map("start_time") // "06:00"
+  endTime   String     @map("end_time") // "07:00"
+  price     Int // Price in INR for this slot
+  status    SlotStatus @default(AVAILABLE)
+
+  // 5-Minute Hold Fields
+  heldBy        Int?      @map("held_by") // User ID of the player holding the slot
+  holdExpiresAt DateTime? @map("hold_expires_at")
+  version       Int       @default(0) // Optimistic concurrency row counter
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  court  Court @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  holder User? @relation(fields: [heldBy], references: [id], onDelete: SetNull)
+
+  // Enforce no duplicate slot times for the same court on the same date
+  @@unique([courtId, date, startTime])
+  @@index([courtId, date])
+  @@map("tbl_slot")
+}
