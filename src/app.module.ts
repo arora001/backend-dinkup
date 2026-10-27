@@ -5,6 +5,9 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { VenuesModule } from './modules/venues/venues.module.js';
 import { CourtsModule } from './modules/courts/courts.module.js';
 import { ScheduleModule } from './modules/schedule/schedule.module.js';
+import { SlotsModule } from './modules/slots/slots.module.js';
+import { RealtimeModule } from './modules/realtime/realtime.module.js';
+import { JobsModule } from './modules/jobs/jobs.module.js';
 
 @Module({
   imports: [
@@ -17,6 +20,9 @@ import { ScheduleModule } from './modules/schedule/schedule.module.js';
     VenuesModule,
     CourtsModule,
     ScheduleModule,
+    SlotsModule,
+    RealtimeModule,
+    JobsModule,
   ],
   controllers: [],
   providers: [],
