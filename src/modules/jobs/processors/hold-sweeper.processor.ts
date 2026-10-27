@@ -16,7 +16,7 @@ export class HoldSweeperProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job): Promise<{ sweptCount: number }> {
+  async process(_job: Job): Promise<{ sweptCount: number }> {
     // this.logger.debug(`Running hold sweeper job #${job.id}...`);
 
     try {

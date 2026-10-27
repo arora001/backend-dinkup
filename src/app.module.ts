@@ -8,6 +8,7 @@ import { ScheduleModule } from './modules/schedule/schedule.module.js';
 import { SlotsModule } from './modules/slots/slots.module.js';
 import { RealtimeModule } from './modules/realtime/realtime.module.js';
 import { JobsModule } from './modules/jobs/jobs.module.js';
+import { RedisModule } from './common/redis/redis.module.js';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { JobsModule } from './modules/jobs/jobs.module.js';
       envFilePath: '.env',
     }),
     PrismaModule,
+    RedisModule,
     AuthModule,
     VenuesModule,
     CourtsModule,

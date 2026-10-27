@@ -47,3 +47,8 @@ ALTER TABLE "tbl_booking" ADD CONSTRAINT "tbl_booking_court_id_fkey" FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE "tbl_booking" ADD CONSTRAINT "tbl_booking_venue_id_fkey" FOREIGN KEY ("venue_id") REFERENCES "tbl_venue"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Partial unique index ensuring at most one active (PENDING or CONFIRMED) booking per slot
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_booking_slot_active" 
+ON "tbl_booking" ("slot_id") 
+WHERE "status" IN ('PENDING', 'CONFIRMED');
