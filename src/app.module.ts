@@ -7,6 +7,7 @@ import { CourtsModule } from './modules/courts/courts.module.js';
 import { ScheduleModule } from './modules/schedule/schedule.module.js';
 import { SlotsModule } from './modules/slots/slots.module.js';
 import { BookingsModule } from './modules/bookings/bookings.module.js';
+import { PaymentsModule } from './modules/payments/payments.module.js';
 import { RealtimeModule } from './modules/realtime/realtime.module.js';
 import { JobsModule } from './modules/jobs/jobs.module.js';
 import { RedisModule } from './common/redis/redis.module.js';
@@ -25,6 +26,7 @@ import { RedisModule } from './common/redis/redis.module.js';
     ScheduleModule,
     SlotsModule,
     BookingsModule,
+    PaymentsModule,
     RealtimeModule,
     JobsModule,
   ],
