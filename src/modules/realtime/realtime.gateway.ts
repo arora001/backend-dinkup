@@ -126,4 +126,47 @@ export class RealtimeGateway
     this.server.emit('slot:blocked:global', data);
     this.logger.debug(`Broadcast slot:blocked for slot #${data.slotId} to room ${room}`);
   }
+
+  /**
+   * Broadcast that a seat was claimed in an open game
+   */
+  broadcastSeatClaimed(data: {
+    gameId: number;
+    seatNumber: number;
+    userId: number;
+    seatsTaken: number;
+    seatsTotal: number;
+    status: string;
+  }) {
+    const room = `game:${data.gameId}`;
+    this.server.to(room).emit('seat:claimed', data);
+    this.server.emit('seat:claimed:global', data);
+    this.logger.debug(`Broadcast seat:claimed for game #${data.gameId} seat #${data.seatNumber}`);
+  }
+
+  /**
+   * Broadcast that a seat was released / expired in an open game
+   */
+  broadcastSeatReleased(data: {
+    gameId: number;
+    seatNumber: number;
+    seatsTaken: number;
+    seatsTotal: number;
+    status: string;
+  }) {
+    const room = `game:${data.gameId}`;
+    this.server.to(room).emit('seat:released', data);
+    this.server.emit('seat:released:global', data);
+    this.logger.debug(`Broadcast seat:released for game #${data.gameId} seat #${data.seatNumber}`);
+  }
+
+  /**
+   * Broadcast that an open game reached capacity (FULL)
+   */
+  broadcastGameFull(data: { gameId: number }) {
+    const room = `game:${data.gameId}`;
+    this.server.to(room).emit('game:full', data);
+    this.server.emit('game:full:global', data);
+    this.logger.debug(`Broadcast game:full for game #${data.gameId}`);
+  }
 }
