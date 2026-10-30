@@ -82,6 +82,25 @@ enum PaymentProvider {
   RAZORPAY
 }
 
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  OPEN
+}
+
+enum GameStatus {
+  OPEN
+  FULL
+  CANCELLED
+}
+
+enum GameSeatStatus {
+  HELD
+  CONFIRMED
+  RELEASED
+}
+
 // ─────────────────────────────────────────────
 // Auth & Users
 // ─────────────────────────────────────────────
@@ -98,10 +117,12 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  venues   Venue[]
-  slots    Slot[]
-  bookings Booking[]
-  payments Payment[]
+  venues       Venue[]
+  slots        Slot[]
+  bookings     Booking[]
+  payments     Payment[]
+  createdGames Game[]     @relation("GameCreator")
+  gameSeats    GameSeat[]
 
   @@map("tbl_user")
 }
@@ -149,6 +170,7 @@ model Venue {
   courts   Court[]
   images   VenueImage[]
   bookings Booking[]
+  games    Game[]
 
   @@index([city, area])
   @@map("tbl_venue")
@@ -186,6 +208,7 @@ model Court {
   schedules Schedule[]
   slots     Slot[]
   bookings  Booking[]
+  games     Game[]
 
   @@map("tbl_court")
 }
@@ -263,6 +286,7 @@ model Booking {
   court    Court     @relation(fields: [courtId], references: [id], onDelete: Cascade)
   venue    Venue     @relation(fields: [venueId], references: [id], onDelete: Cascade)
   payments Payment[]
+  game     Game?
 
   @@index([userId])
   @@index([slotId])
@@ -284,7 +308,7 @@ model Payment {
   orderId          String          @map("order_id") // Gateway order ID (e.g. order_mock_xxx or order_xxx)
   paymentId        String?         @map("payment_id") // Gateway payment ID (e.g. pay_xxx)
   signature        String?
-  amount           Int             // Total amount in INR
+  amount           Int // Total amount in INR
   currency         String          @default("INR")
   status           PaymentStatus   @default(CREATED)
   refundId         String?         @map("refund_id")
@@ -314,4 +338,63 @@ model WebhookEvent {
   createdAt   DateTime        @default(now()) @map("created_at")
 
   @@map("tbl_webhook_event")
+}
+
+// ─────────────────────────────────────────────
+// Module 6: Open Games
+// ─────────────────────────────────────────────
+
+model Game {
+  id           Int        @id @default(autoincrement())
+  bookingId    Int        @unique @map("booking_id")
+  creatorId    Int        @map("creator_id")
+  courtId      Int        @map("court_id")
+  venueId      Int        @map("venue_id")
+  title        String?
+  description  String?
+  skillLevel   SkillLevel @default(OPEN) @map("skill_level")
+  seatsTotal   Int        @default(4) @map("seats_total")
+  seatsTaken   Int        @default(1) @map("seats_taken")
+  pricePerSeat Int        @map("price_per_seat")
+  status       GameStatus @default(OPEN)
+  version      Int        @default(0) // Optimistic row version
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  booking Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  creator User       @relation("GameCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  court   Court      @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  venue   Venue      @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  seats   GameSeat[]
+
+  @@index([venueId])
+  @@index([courtId])
+  @@index([creatorId])
+  @@index([status])
+  @@index([skillLevel])
+  @@map("tbl_game")
+}
+
+model GameSeat {
+  id            Int            @id @default(autoincrement())
+  gameId        Int            @map("game_id")
+  userId        Int            @map("user_id")
+  seatNumber    Int            @map("seat_number") // 1 (creator), 2, 3, 4
+  price         Int            @map("price")
+  status        GameSeatStatus @default(HELD)
+  holdExpiresAt DateTime?      @map("hold_expires_at")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, userId]) // 1 seat per player in a game
+  @@unique([gameId, seatNumber]) // No duplicate seat numbers in a game
+  @@index([gameId])
+  @@index([userId])
+  @@index([status])
+  @@map("tbl_game_seat")
 }
