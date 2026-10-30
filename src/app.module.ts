@@ -10,6 +10,7 @@ import { BookingsModule } from './modules/bookings/bookings.module.js';
 import { PaymentsModule } from './modules/payments/payments.module.js';
 import { RealtimeModule } from './modules/realtime/realtime.module.js';
 import { JobsModule } from './modules/jobs/jobs.module.js';
+import { GamesModule } from './modules/games/games.module.js';
 import { RedisModule } from './common/redis/redis.module.js';
 
 @Module({
@@ -27,6 +28,7 @@ import { RedisModule } from './common/redis/redis.module.js';
     SlotsModule,
     BookingsModule,
     PaymentsModule,
+    GamesModule,
     RealtimeModule,
     JobsModule,
   ],
