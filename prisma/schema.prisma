@@ -69,6 +69,19 @@ enum BookingStatus {
   REFUNDED
 }
 
+enum PaymentStatus {
+  CREATED
+  CAPTURED
+  REFUND_PENDING
+  REFUNDED
+  FAILED
+}
+
+enum PaymentProvider {
+  MOCK
+  RAZORPAY
+}
+
 // ─────────────────────────────────────────────
 // Auth & Users
 // ─────────────────────────────────────────────
@@ -88,6 +101,7 @@ model User {
   venues   Venue[]
   slots    Slot[]
   bookings Booking[]
+  payments Payment[]
 
   @@map("tbl_user")
 }
@@ -244,14 +258,60 @@ model Booking {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  slot  Slot  @relation(fields: [slotId], references: [id], onDelete: Restrict)
-  court Court @relation(fields: [courtId], references: [id], onDelete: Cascade)
-  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slot     Slot      @relation(fields: [slotId], references: [id], onDelete: Restrict)
+  court    Court     @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  venue    Venue     @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  payments Payment[]
 
   @@index([userId])
   @@index([slotId])
   @@index([venueId])
   @@index([status])
   @@map("tbl_booking")
+}
+
+// ─────────────────────────────────────────────
+// Module 5: Payments & Webhook Deduplication
+// ─────────────────────────────────────────────
+
+model Payment {
+  id               Int             @id @default(autoincrement())
+  paymentReference String          @unique @map("payment_reference") // e.g. "PAY-261030-9X4A"
+  bookingId        Int             @map("booking_id")
+  userId           Int             @map("user_id")
+  provider         PaymentProvider @default(MOCK)
+  orderId          String          @map("order_id") // Gateway order ID (e.g. order_mock_xxx or order_xxx)
+  paymentId        String?         @map("payment_id") // Gateway payment ID (e.g. pay_xxx)
+  signature        String?
+  amount           Int             // Total amount in INR
+  currency         String          @default("INR")
+  status           PaymentStatus   @default(CREATED)
+  refundId         String?         @map("refund_id")
+  refundReason     String?         @map("refund_reason")
+  idempotencyKey   String?         @map("idempotency_key")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([userId])
+  @@index([orderId])
+  @@index([status])
+  @@map("tbl_payment")
+}
+
+model WebhookEvent {
+  id          Int             @id @default(autoincrement())
+  eventId     String          @unique @map("event_id") // Gateway event ID for deduplication
+  provider    PaymentProvider @default(MOCK)
+  eventType   String          @map("event_type") // e.g. "payment.captured", "payment.failed"
+  payload     Json
+  processedAt DateTime        @default(now()) @map("processed_at")
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  @@map("tbl_webhook_event")
 }
