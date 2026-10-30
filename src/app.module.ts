@@ -6,8 +6,10 @@ import { VenuesModule } from './modules/venues/venues.module.js';
 import { CourtsModule } from './modules/courts/courts.module.js';
 import { ScheduleModule } from './modules/schedule/schedule.module.js';
 import { SlotsModule } from './modules/slots/slots.module.js';
+import { BookingsModule } from './modules/bookings/bookings.module.js';
 import { RealtimeModule } from './modules/realtime/realtime.module.js';
 import { JobsModule } from './modules/jobs/jobs.module.js';
+import { RedisModule } from './common/redis/redis.module.js';
 
 @Module({
   imports: [
@@ -16,11 +18,13 @@ import { JobsModule } from './modules/jobs/jobs.module.js';
       envFilePath: '.env',
     }),
     PrismaModule,
+    RedisModule,
     AuthModule,
     VenuesModule,
     CourtsModule,
     ScheduleModule,
     SlotsModule,
+    BookingsModule,
     RealtimeModule,
     JobsModule,
   ],

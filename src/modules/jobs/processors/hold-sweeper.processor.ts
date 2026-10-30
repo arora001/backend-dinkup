@@ -16,7 +16,7 @@ export class HoldSweeperProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job): Promise<{ sweptCount: number }> {
+  async process(_job: Job): Promise<{ sweptCount: number }> {
     // this.logger.debug(`Running hold sweeper job #${job.id}...`);
 
     try {
@@ -43,6 +43,17 @@ export class HoldSweeperProcessor extends WorkerHost {
 
       if (swept.length > 0) {
         this.logger.log(`Swept ${swept.length} expired slot hold(s)`);
+
+        const sweptSlotIds = swept.map((s) => s.id);
+
+        // Transition associated PENDING bookings to EXPIRED per DinkUp spec
+        await this.prisma.$executeRaw`
+          UPDATE tbl_booking
+          SET status = 'EXPIRED'::"BookingStatus",
+              updated_at = NOW()
+          WHERE status = 'PENDING'::"BookingStatus"
+            AND slot_id = ANY(${sweptSlotIds});
+        `;
 
         for (const slot of swept) {
           const dateStr =

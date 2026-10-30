@@ -61,6 +61,14 @@ enum SlotStatus {
   BLOCKED
 }
 
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+  REFUNDED
+}
+
 // ─────────────────────────────────────────────
 // Auth & Users
 // ─────────────────────────────────────────────
@@ -77,8 +85,9 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  venues Venue[]
-  slots  Slot[]
+  venues   Venue[]
+  slots    Slot[]
+  bookings Booking[]
 
   @@map("tbl_user")
 }
@@ -122,9 +131,10 @@ model Venue {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  host   User         @relation(fields: [hostId], references: [id], onDelete: Cascade)
-  courts Court[]
-  images VenueImage[]
+  host     User         @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  courts   Court[]
+  images   VenueImage[]
+  bookings Booking[]
 
   @@index([city, area])
   @@map("tbl_venue")
@@ -161,6 +171,7 @@ model Court {
   venue     Venue      @relation(fields: [venueId], references: [id], onDelete: Cascade)
   schedules Schedule[]
   slots     Slot[]
+  bookings  Booking[]
 
   @@map("tbl_court")
 }
@@ -198,11 +209,49 @@ model Slot {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  court  Court @relation(fields: [courtId], references: [id], onDelete: Cascade)
-  holder User? @relation(fields: [heldBy], references: [id], onDelete: SetNull)
+  court    Court     @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  holder   User?     @relation(fields: [heldBy], references: [id], onDelete: SetNull)
+  bookings Booking[]
 
   // Enforce no duplicate slot times for the same court on the same date
   @@unique([courtId, date, startTime])
   @@index([courtId, date])
   @@map("tbl_slot")
+}
+
+// ─────────────────────────────────────────────
+// Module 4: Bookings
+// ─────────────────────────────────────────────
+
+model Booking {
+  id               Int           @id @default(autoincrement())
+  bookingReference String        @unique @map("booking_reference") // e.g. "DNK-261027-9X4A"
+  userId           Int           @map("user_id")
+  slotId           Int           @map("slot_id")
+  courtId          Int           @map("court_id")
+  venueId          Int           @map("venue_id")
+  status           BookingStatus @default(PENDING)
+
+  totalPrice Int @map("total_price") // INR price locked at checkout
+
+  cancellationCutoff DateTime? @map("cancellation_cutoff")
+  cancelledAt        DateTime? @map("cancelled_at")
+  cancelReason       String?   @map("cancel_reason")
+
+  idempotencyKey String? @map("idempotency_key")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slot  Slot  @relation(fields: [slotId], references: [id], onDelete: Restrict)
+  court Court @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([slotId])
+  @@index([venueId])
+  @@index([status])
+  @@map("tbl_booking")
 }
