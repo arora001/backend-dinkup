@@ -15,7 +15,27 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
-  app.setGlobalPrefix('api/v1');
+  const rawOrigins = process.env.CORS_ORIGIN;
+  const corsOrigin =
+    rawOrigins && rawOrigins !== '*'
+      ? rawOrigins.split(',').map((o) => o.trim())
+      : true;
+
+  app.enableCors({
+    origin: corsOrigin,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Idempotency-Key',
+      'x-razorpay-signature',
+    ],
+  });
+
+  app.setGlobalPrefix('api/v1', {
+    exclude: ['health'],
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -38,6 +58,10 @@ async function bootstrap() {
     swaggerOptions: { persistAuthorization: true },
   });
 
-  await app.listen(process.env.PORT ?? 5003);
+  const port = process.env.PORT ?? 5003;
+  await app.listen(port, '0.0.0.0');
+  console.log(`🚀 DinkUp API running on http://0.0.0.0:${port}/api/v1`);
+  console.log(`📚 Swagger docs available at http://0.0.0.0:${port}/api/docs`);
+  console.log(`💓 Health check active at http://0.0.0.0:${port}/health`);
 }
 void bootstrap();
