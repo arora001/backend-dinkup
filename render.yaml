@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: starter
     region: singapore
-    buildCommand: pnpm install && pnpm exec prisma generate && pnpm build
+    buildCommand: pnpm install --prod=false && pnpm exec prisma generate && pnpm build
     startCommand: pnpm exec prisma migrate deploy && pnpm start:prod
     healthCheckPath: /health
     envVars:
