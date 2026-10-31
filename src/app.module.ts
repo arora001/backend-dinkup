@@ -11,6 +11,7 @@ import { PaymentsModule } from './modules/payments/payments.module.js';
 import { RealtimeModule } from './modules/realtime/realtime.module.js';
 import { JobsModule } from './modules/jobs/jobs.module.js';
 import { GamesModule } from './modules/games/games.module.js';
+import { HealthModule } from './modules/health/health.module.js';
 import { RedisModule } from './common/redis/redis.module.js';
 
 @Module({
@@ -31,6 +32,7 @@ import { RedisModule } from './common/redis/redis.module.js';
     GamesModule,
     RealtimeModule,
     JobsModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [],
