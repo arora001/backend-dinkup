@@ -1,8 +1,6 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Logger } from '@nestjs/common';
-import { Job } from 'bullmq';
+import { Injectable, Logger } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { QUEUE_SLOT_GENERATOR } from '../queues/queue.constants.js';
 import { DayOfWeek } from '../../../generated/prisma/enums.js';
 import { SlotStatus } from '../../../common/enums/slot-status.enum.js';
 
@@ -16,17 +14,31 @@ const JS_DAY_TO_ENUM: Record<number, DayOfWeek> = {
   6: DayOfWeek.SATURDAY,
 };
 
-@Processor(QUEUE_SLOT_GENERATOR)
-export class SlotGeneratorProcessor extends WorkerHost {
+@Injectable()
+export class SlotGeneratorProcessor {
   private readonly logger = new Logger(SlotGeneratorProcessor.name);
+  private isRunning = false;
 
-  constructor(private readonly prisma: PrismaService) {
-    super();
+  constructor(private readonly prisma: PrismaService) {}
+
+  @Cron('0 0 * * *') // Daily at midnight (00:00 UTC)
+  async handleCron(): Promise<void> {
+    if (this.isRunning) {
+      return;
+    }
+    this.isRunning = true;
+    try {
+      await this.process();
+    } catch (err) {
+      this.logger.error('Error during scheduled daily slot generation:', err);
+    } finally {
+      this.isRunning = false;
+    }
   }
 
-  async process(job: Job<{ daysAhead?: number }>): Promise<{ generatedCount: number }> {
-    const daysAhead = job.data?.daysAhead ?? 14;
-    this.logger.log(`Running slot generator job #${job.id} for the next ${daysAhead} days...`);
+  async process(options?: { daysAhead?: number }): Promise<{ generatedCount: number }> {
+    const daysAhead = options?.daysAhead ?? 14;
+    this.logger.log(`Running slot generator for the next ${daysAhead} days...`);
 
     try {
       const courts = await this.prisma.court.findMany({
