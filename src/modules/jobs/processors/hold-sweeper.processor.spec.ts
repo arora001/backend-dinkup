@@ -1,7 +1,6 @@
 import { HoldSweeperProcessor } from './hold-sweeper.processor.js';
 import type { PrismaService } from '../../prisma/prisma.service.js';
 import type { RealtimeGateway } from '../../realtime/realtime.gateway.js';
-import type { Job } from 'bullmq';
 
 describe('HoldSweeperProcessor', () => {
   let processor: HoldSweeperProcessor;

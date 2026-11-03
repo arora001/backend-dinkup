@@ -1,24 +1,34 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Logger } from '@nestjs/common';
-import { Job } from 'bullmq';
+import { Injectable, Logger } from '@nestjs/common';
+import { Interval } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { RealtimeGateway } from '../../realtime/realtime.gateway.js';
-import { QUEUE_HOLD_SWEEPER } from '../queues/queue.constants.js';
 
-@Processor(QUEUE_HOLD_SWEEPER)
-export class HoldSweeperProcessor extends WorkerHost {
+@Injectable()
+export class HoldSweeperProcessor {
   private readonly logger = new Logger(HoldSweeperProcessor.name);
+  private isRunning = false;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly realtimeGateway: RealtimeGateway,
-  ) {
-    super();
+  ) {}
+
+  @Interval(30000)
+  async handleInterval(): Promise<void> {
+    if (this.isRunning) {
+      return;
+    }
+    this.isRunning = true;
+    try {
+      await this.process();
+    } catch (err) {
+      this.logger.error('Error during scheduled hold sweep interval:', err);
+    } finally {
+      this.isRunning = false;
+    }
   }
 
-  async process(_job: Job): Promise<{ sweptSlotsCount: number; sweptSeatsCount: number }> {
-    // this.logger.debug(`Running hold sweeper job #${job.id}...`);
-
+  async process(_job?: any): Promise<{ sweptSlotsCount: number; sweptSeatsCount: number }> {
     try {
       // 1. Atomic query to sweep expired slot holds per DinkUp architecture:
       // Correctness does not depend on this job (the hold condition in holdSlot already frees it),
