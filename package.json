@@ -17,6 +17,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "seed": "node prisma/seed.mjs",
     "keep-alive": "node scripts/keep-alive.js",
     "lint": "oxlint --type-aware src/ test/",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
@@ -76,5 +77,8 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.2"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.mjs"
   }
 }
